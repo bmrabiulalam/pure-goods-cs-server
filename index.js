@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
+const ObjectID = require('mongodb').ObjectID;
 require('dotenv').config();
 
 const app = express();
@@ -30,6 +31,7 @@ client.connect(err => {
   
   app.post('/addEvent', (req, res) => {
       const newEvent = req.body;
+      console.log('server side: ', newEvent);
       
       eventsCollection.insertOne(newEvent)
       .then(result => {
@@ -37,6 +39,14 @@ client.connect(err => {
           res.send(result.insertedCount > 0)
       })
   })
+
+  app.delete('/deleteEvent/:id', (req, res) => {
+      const id = ObjectID(req.params.id);
+
+      eventsCollection.deleteOne({ _id: id})
+      .then(result => res.send(result.deletedCount > 0))
+  })
+
 });
 
 app.get('/', (req, res) => {
