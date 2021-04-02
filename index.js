@@ -19,31 +19,50 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
-  const eventsCollection = client.db(process.env.DB_NAME).collection("events");
+
+  const productsCollection = client.db(process.env.DB_NAME).collection("products");
+  const ordersCollection = client.db(process.env.DB_NAME).collection("orders");
   console.log('Database Connected Successfully!')
 
-  app.get('/events', (req, res) => {
-    eventsCollection.find({})
+  app.get('/products', (req, res) => {
+    productsCollection.find({})
     .toArray((err, documents) => {
         res.send(documents);
     })
   })
   
-  app.post('/addEvent', (req, res) => {
-      const newEvent = req.body;
-      console.log('server side: ', newEvent);
+  app.post('/orders', (req, res) => {
+      const clientEmail = req.body.email;
       
-      eventsCollection.insertOne(newEvent)
+      ordersCollection.find({ email: clientEmail})
+      .toArray((err, documents) => {
+          res.status(200).send(documents);
+      })
+  })
+  
+  app.post('/addProduct', (req, res) => {
+      const newProduct = req.body;
+      
+      productsCollection.insertOne(newProduct)
       .then(result => {
-          console.log('event inserted ', result.insertedCount);
+          res.send(result.insertedCount > 0)
+      })
+  })
+  
+  app.post('/checkout', (req, res) => {
+      const newOrder = req.body;
+      console.log('server side: ', newOrder);
+      
+      ordersCollection.insertOne(newOrder)
+      .then(result => {
           res.send(result.insertedCount > 0)
       })
   })
 
-  app.delete('/deleteEvent/:id', (req, res) => {
+  app.delete('/deleteProduct/:id', (req, res) => {
       const id = ObjectID(req.params.id);
 
-      eventsCollection.deleteOne({ _id: id})
+      productsCollection.deleteOne({ _id: id})
       .then(result => res.send(result.deletedCount > 0))
   })
 
